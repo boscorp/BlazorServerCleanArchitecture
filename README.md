@@ -1,10 +1,8 @@
-# Clean Architecture Blazor Server
+# Blazor Server Clean Architecture
 
-[![Build](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/dotnet.yml/badge.svg)](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/dotnet.yml)
-[![CodeQL](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/codeql-analysis.yml)
-[![Nuget](https://img.shields.io/nuget/v/CleanArchitecture.Blazor.Solution.Template?label=NuGet)](https://www.nuget.org/packages/CleanArchitecture.Blazor.Solution.Template)
-[![Docker Image CI](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/docker-image.yml/badge.svg)](https://github.com/neozhu/CleanArchitectureWithBlazorServer/actions/workflows/docker-image.yml)
-[![Downloads](https://img.shields.io/nuget/dt/CleanArchitecture.Blazor.Solution.Template?label=Downloads)](https://www.nuget.org/packages/CleanArchitecture.Blazor.Solution.Template)
+[![Build](https://github.com/boscorp/BlazorServerCleanArchitecture/actions/workflows/dotnet.yml/badge.svg)](https://github.com/boscorp/BlazorServerCleanArchitecture/actions/workflows/dotnet.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 > A comprehensive Blazor Server application template built with Clean Architecture principles, featuring advanced code generation, AI-powered development support, and enterprise-grade functionality.
 
@@ -21,25 +19,10 @@ It provides a solid foundation for building scalable, maintainable enterprise ap
 - **🔐 Enterprise Security**: Multi-factor authentication, role-based access control
 - **🌐 Multi-tenancy**: Built-in tenant isolation and management
 - **📊 Advanced Data Grid**: Sorting, filtering, pagination, and export capabilities
-- **🎨 Code Generation**: Visual Studio extension for rapid development
 - **🐳 Docker Ready**: Complete containerization support
 - **📱 Progressive Web App**: PWA capabilities for mobile experience
 
-## 🌟 Live Showcase
-
-Experience the application in action:
-
-[![Application Demo](doc/blazorstudio.png)](https://www.youtube.com/watch?v=hCsHSNAs-70)
-
-**Live Demo**: [architecture.blazorserver.com](https://architecture.blazorserver.com/)
-
-### Featured Projects Built with This Template
-
-[![HSE Management System](doc/094346.png)](https://hse.blazorserver.com/)
-**HSE Management System** - [GitHub](https://github.com/neozhu/workflow) | [Live Demo](https://hse.blazorserver.com/)
-
-[![Digital Product Passport](doc/094553.png)](https://materialpassport.blazorserver.com/)
-**EU Digital Product Passport** - [Live Demo](https://materialpassport.blazorserver.com/)
+**Live Demo**: [architecture.devcore.com.mx](https://architecture.devcore.com.mx/)
 
 ## 🛠️ Technology Stack
 
@@ -61,11 +44,11 @@ Experience the application in action:
 │   Server.UI     │    │  Application    │    │     Domain      │
 │   (Blazor)      │───▶│   (Business)    │───▶│   (Entities)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                        │                        
-         │              ┌─────────────────┐               
-         └─────────────▶│ Infrastructure  │               
-                        │   (Data/IO)     │               
-                        └─────────────────┘               
+         │                        │
+         │              ┌─────────────────┐
+         └─────────────▶│ Infrastructure  │
+                        │   (Data/IO)     │
+                        └─────────────────┘
 ```
 
 ### Layer Responsibilities
@@ -75,7 +58,7 @@ Experience the application in action:
 - **Infrastructure**: External concerns (database, email, file system)
 - **Server.UI**: Blazor components and user interface
 
- 
+
 ### 📋 Development Workflow
 
 The project includes a comprehensive [Development Workflow](docs/) with:
@@ -95,39 +78,28 @@ The project includes a comprehensive [Development Workflow](docs/) with:
 
 ### Installation
 
-1. **Install the Template**
-   ```bash
-   dotnet new install CleanArchitecture.Blazor.Solution.Template
-   ```
-
-2. **Create New Project**
-   ```bash
-   dotnet new ca-blazorserver-sln -n YourProjectName
-   cd YourProjectName
-   ```
-
-3. **Setup Database**
+1. **Setup Database**
    ```bash
    dotnet ef database update --project src/Migrators/Migrators.MSSQL
    ```
 
-4. **Run the Application**
+2. **Run the Application**
    ```bash
    dotnet run --project src/Server.UI
    ```
 
-5. **Access the Application**
+3. **Access the Application**
    - Navigate to `https://localhost:7152`
    - Login with default credentials (see documentation)
 
 ### 🐳 Docker Deployment
 
-**Run with configured database provider (In-Memory removed)**:
+**Run with configured database provider**:
 ```bash
 docker run -p 8443:443 \
   -e DatabaseSettings__DBProvider=mssql \
   -e DatabaseSettings__ConnectionString="Server=127.0.0.1;Database=BlazorDashboardDb;User Id=sa;Password=<YourPassword>;MultipleActiveResultSets=true;Encrypt=false;TrustServerCertificate=false" \
-  blazordevlab/cleanarchitectureblazorserver:latest
+  boscor/blazorservercleanarchitecture:latest
 ```
 
 **Production Setup (docker compose)**:
@@ -150,7 +122,7 @@ See [Docker Setup Documentation](#docker-setup-for-blazor-server-application) fo
 OpenSpec enables spec-driven, reviewable changes with clear proposals, deltas, and tasks. This repo includes guidance in `openspec/AGENTS.md` and a project context in `openspec/project.md`.
 
 - Read the quickstart: `openspec/AGENTS.md`
-- Project conventions and patterns: `openspec/project.md` (see "New Entity/Feature Guide (Contacts Pattern)") 
+- Project conventions and patterns: `openspec/project.md` (see "New Entity/Feature Guide (Contacts Pattern)")
 
 ### Workflow
 
@@ -238,17 +210,6 @@ Tips
 - Add menu entries in `src/Server.UI/Services/Navigation/MenuService.cs`.
 - Define permissions under `Permissions.<Module>` and they'll be picked up during seeding.
 
-## 🔧 Code Generation
-
-Accelerate development with the Visual Studio extension:
-
-- **[CleanArchitecture CodeGenerator](https://github.com/neozhu/CleanArchitectureCodeGenerator)**
-- Automatically generates layers for new entities
-- Maintains architectural consistency
-- Reduces boilerplate code by 80%
-
-<div><video controls src="https://user-images.githubusercontent.com/1549611/197116874-f28414ca-7fc1-463a-b887-0754a5bb3e01.mp4" muted="false"></video></div>
-
 ## 🗄️ Database Support
 
 | Database | Provider Name | Status |
@@ -281,7 +242,7 @@ Configure OAuth providers in `appsettings.json`:
 ### Pull the Docker Image
 
 ```bash
-docker pull blazordevlab/cleanarchitectureblazorserver:latest
+docker pull boscor/blazorservercleanarchitecture:latest
 ```
 
 ### Run the Docker Container
@@ -291,7 +252,7 @@ For Development:
 docker run -p 8443:443 -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_HTTPS_PORTS=443 \
   -e DatabaseSettings__DBProvider=mssql \
   -e DatabaseSettings__ConnectionString="Server=127.0.0.1;Database=BlazorDashboardDb;User Id=sa;Password=<YourPassword>;MultipleActiveResultSets=true;Encrypt=false;TrustServerCertificate=false" \
-  blazordevlab/cleanarchitectureblazorserver:latest
+  boscor/blazorservercleanarchitecture:latest
 ```
 
 For Production (Persistent Database and SMTP Configuration):
@@ -312,7 +273,7 @@ docker run -d -p 8443:443 \
 -e Authentication__Google__ClientSecret=<YourGoogleClientSecret> \
 -e Authentication__Facebook__AppId=<YourFacebookAppId> \
 -e Authentication__Facebook__AppSecret=<YourFacebookAppSecret> \
-blazordevlab/cleanarchitectureblazorserver:latest
+boscor/blazorservercleanarchitecture:latest
 ```
 
 ### Docker Compose Setup
@@ -323,7 +284,7 @@ For easier management, use a docker-compose.yml file:
 version: '3.8'
 services:
   blazorserverapp:
-    image: blazordevlab/cleanarchitectureblazorserver:latest
+    image: boscor/blazorservercleanarchitecture:latest
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80;https://+:443
@@ -371,26 +332,13 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Add tests
 5. Submit a pull request
 
-## 📖 Learning Resources
-
-### Video Tutorials
-
-[![Adding Contact Entity](doc/create.png)](https://www.youtube.com/watch?v=X1b4hFLs4vo)
-**Tutorial: Adding a Contact Entity**
-
-[![Removing Customer Object](doc/remove.png)](https://www.youtube.com/watch?v=i3p-3I95YqM)
-**Tutorial: Removing a Customer Object**
-
-### Related Projects
-
-- **[CleanAspire](https://github.com/neozhu/cleanaspire)**: Blazor WebAssembly version with .NET Aspire
-- **[CleanArchitecture CodeGenerator](https://github.com/neozhu/CleanArchitectureCodeGenerator)**: Visual Studio extension
-
 ## 🌐 About the Creator
 
 Visit my website for more Blazor resources and professional services:
 
-**[BlazorServer.com](https://blazorserver.com)** - Blazor Development Services & Resources
+**[DevCore](https://devcore.com.mx)** - Blazor Development Services & Resources
+
+Maintained by **boscorp**
 
 ## ❤️ Support This Project
 
@@ -399,7 +347,7 @@ If this project helps you, please consider supporting its development:
 - **⭐ Star this repository**
 - **🐛 Report issues**
 - **💡 Suggest features**
-- **💰 Sponsor**: [GitHub Sponsors](https://github.com/sponsors/neozhu) | [PayPal](https://paypal.me/hualinz)
+- **💰 Sponsor**: [PayPal](https://paypal.me/boscormx)
 
 Your support helps maintain and improve this project. Thank you! 🙏
 
@@ -413,6 +361,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ using Clean Architecture principles**
 
-[⭐ Star this repo](https://github.com/neozhu/CleanArchitectureWithBlazorServer) | [🐛 Report Bug](https://github.com/neozhu/CleanArchitectureWithBlazorServer/issues) | [💡 Request Feature](https://github.com/neozhu/CleanArchitectureWithBlazorServer/issues)
+[⭐ Star this repo](https://github.com/boscorp/BlazorServerCleanArchitecture) | [🐛 Report Bug](https://github.com/boscorp/BlazorServerCleanArchitecture/issues) | [💡 Request Feature](https://github.com/boscorp/BlazorServerCleanArchitecture/issues)
 
 </div>
