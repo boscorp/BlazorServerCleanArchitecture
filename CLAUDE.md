@@ -2,42 +2,62 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build, Test, and Run Commands
+## Quick Reference
 
-### Build
+### Common Commands
+
+**Build & Run**:
 ```bash
+# Restore and build
 dotnet restore CleanArchitecture.Blazor.slnx
 dotnet build CleanArchitecture.Blazor.slnx --configuration Debug
-```
 
-### Run Application
-```bash
+# Run application
 dotnet run --project src/Server.UI
+# Access at https://localhost:7152
 ```
-Access at `https://localhost:7152`
 
-### Database Migrations
+**Database Operations**:
 ```bash
-# MSSQL
+# Update database (choose your provider)
 dotnet ef database update --project src/Migrators/Migrators.MSSQL
-
-# PostgreSQL
 dotnet ef database update --project src/Migrators/Migrators.PostgreSQL
-
-# SQLite
 dotnet ef database update --project src/Migrators/Migrators.SqLite
+
+# Create new migration (after schema changes)
+dotnet ef migrations add MigrationName --project src/Migrators/Migrators.MSSQL
+dotnet ef migrations add MigrationName --project src/Migrators/Migrators.PostgreSQL
+dotnet ef migrations add MigrationName --project src/Migrators/Migrators.SqLite
 ```
 
-### Testing
+**Testing**:
 ```bash
 # Run all tests
 dotnet test
 
-# Run specific test project
+# Run specific test suites
 dotnet test tests/Application.UnitTests
 dotnet test tests/Application.IntegrationTests
 dotnet test tests/Domain.UnitTests
 dotnet test tests/Infrastructure.UnitTests
+
+# Run with coverage
+dotnet test /p:CollectCoverage=true
+```
+
+**Docker**:
+```bash
+# Build image
+docker build -t blazorservercleanarchitecture .
+
+# Run container
+docker run -p 8443:443 \
+  -e DatabaseSettings__DBProvider=mssql \
+  -e DatabaseSettings__ConnectionString="..." \
+  blazorservercleanarchitecture
+
+# Use docker-compose
+docker-compose up -d
 ```
 
 ## Architecture Overview
@@ -82,6 +102,11 @@ This ensures proper tenant scoping, lifetime management, and prevents concurrenc
 
 **Validation**: FluentValidation integrated via MediatR pipeline behavior. Each command has a corresponding validator.
 
+**SignalR Hubs**: Real-time communication infrastructure:
+- `ServerHub`: Main SignalR hub for server-client communication
+- `ServerHubWrapper`: Wrapper for hub operations
+- `ISignalRHub` and `HubClient`: Abstractions for hub communication
+
 ### Multi-Tenancy
 
 Multi-tenant architecture with tenant isolation at the database level:
@@ -95,6 +120,82 @@ Multi-tenant architecture with tenant isolation at the database level:
 - Risk analysis via `SecurityAnalysisHeuristics` detecting brute-force, unusual times, new devices/locations
 - Permission-based authorization with granular permissions per feature (View, Create, Edit, Delete, Export, etc.)
 - Permissions auto-seeded from `Permissions` class nested static classes
+
+### Feature Modules
+
+The Application layer includes these complete feature modules (in `src/Application/Features/`):
+
+- **Contacts**: Customer relationship management (reference implementation for new features)
+- **Products**: Product catalog management
+- **Documents**: Document management with file upload/download
+- **Tenants**: Multi-tenant organization management
+- **Identity**: User and role management
+- **AuditTrails**: System audit logging and tracking
+- **LoginAudits**: Authentication attempt tracking with risk scoring
+- **SystemLogs**: Application-wide system logging
+- **PicklistSets**: Dynamic dropdown/picklist configuration
+
+Each feature follows the same CQRS structure: Caching, Commands, DTOs, EventHandlers, Queries, Specifications, and a nested Permissions class.
+
+### AI Capabilities
+
+The application includes AI-powered features:
+
+- **Chatbot Interface**: Interactive AI chatbot using OpenAI API (`src/Server.UI/Pages/AI/Chatbot.razor`)
+- **OCR Integration**: Gemini API integration for optical character recognition on documents
+- **AI Configuration**: Both Gemini and OpenAI API keys configurable in `AISettings` section
+
+## Development Best Practices
+
+### Critical Patterns to Follow
+
+1. **DbContext Lifetime Management**:
+   - NEVER inject `ApplicationDbContext` directly into services
+   - ALWAYS use `IApplicationDbContextFactory` with per-operation context lifetime
+   - Pattern: `await using var db = await _dbContextFactory.CreateAsync(cancellationToken);`
+   - This prevents concurrency issues in Blazor Server's long-lived circuits
+
+2. **Cache Invalidation**:
+   - Every query that implements `ICacheableRequest` must have a corresponding `<Entity>CacheKey` class
+   - Commands implementing `ICacheInvalidatorRequest` must specify cache tags for invalidation
+   - Use consistent tag naming: `<Entity>CacheKey.Tags`
+
+3. **Specifications Pattern**:
+   - Create reusable query logic with Ardalis.Specification
+   - Always implement at minimum: `ByIdSpecification` and `AdvancedSpecification`
+   - Specifications compose cleanly and reduce query duplication
+
+4. **Permissions**:
+   - Define permissions as nested static classes under `Permissions`
+   - No manual registration needed - auto-discovered during seed
+   - Standard permissions: View, Create, Edit, Delete, Export, Import, Search
+
+5. **Domain Events**:
+   - Entities should raise domain events for significant state changes
+   - Standard events: Created, Updated, Deleted
+   - Event handlers belong in Application layer's EventHandlers folder
+
+6. **Validation**:
+   - Every command must have a corresponding FluentValidation validator
+   - Validators execute automatically via MediatR pipeline behavior
+   - Keep validators focused on business rules, not just data format
+
+### Code Organization
+
+- **Feature Folders**: Group by feature (vertical slices), not technical layers
+- **Naming Conventions**:
+  - Commands: `Add<Entity>Command`, `Update<Entity>Command`, `Delete<Entity>Command`
+  - Queries: `Get<Entity>ByIdQuery`, `<Entity>PaginationQuery`
+  - DTOs: `<Entity>Dto`
+  - Specifications: `<Entity>ByIdSpecification`, `<Entity>AdvancedSpecification`
+
+### Testing Strategy
+
+Test projects mirror source structure:
+- **Domain.UnitTests**: Entity behavior and domain logic
+- **Application.UnitTests**: Command/query handlers, validators
+- **Application.IntegrationTests**: End-to-end feature testing with real database
+- **Infrastructure.UnitTests**: External service integrations
 
 ## Adding a New Entity/Feature
 
@@ -196,15 +297,43 @@ Configure in `appsettings.json`:
 ### External Services
 
 - **MinIO** (Object Storage): `Minio` section with `Endpoint`, `AccessKey`, `SecretKey`, `BucketName`
-- **SMTP** (Email): `SmtpClientOptions` with `Server`, `Port`, `User`, `Password`
-- **Gemini API** (OCR): `AI:GeminiApiKey`
+- **SMTP** (Email): `SmtpClientOptions` with `Host`, `Port`, `UserName`, `Password`, `UseSsl`, `DefaultFromEmail`
+- **AI Services**:
+  - `AISettings:GeminiApiKey` for OCR and AI features
+  - `AISettings:OpenAIApiKey` for OpenAI integration
+- **MaxMind** (Geolocation): `MaxMind` section with `AccountId`, `LicenseKey`, `Host` (geolite.info for GeoLite2)
 - **Serilog** (Logging): `Serilog:WriteTo` array with sinks (Console, SQLite, PostgreSQL, MSSqlServer, Seq)
 - **Hangfire**: Background jobs, dashboard at `/jobs`
 - **OAuth Providers**: `Authentication` section for Microsoft, Google, Facebook
 
+### Security & Identity Configuration
+
+- **IdentitySettings**: Password policy configuration
+  - `RequireDigit`, `RequiredLength`, `MaxLength`
+  - `RequireNonAlphanumeric`, `RequireUpperCase`, `RequireLowerCase`
+  - `DefaultLockoutTimeSpan` (in minutes)
+
+- **SecurityAnalysis**: Risk analysis thresholds
+  - `HistoryDays`: How many days to analyze (default: 30)
+  - `BruteForceWindowMinutes`: Time window for detecting brute force (default: 10)
+  - `AccountBruteForceThreshold`: Failed attempts per account (default: 3)
+  - `IpBruteForceThreshold`: Failed attempts per IP (default: 10)
+  - `IpBruteForceAccountThreshold`: Different accounts tried from same IP (default: 3)
+  - Score values determine risk severity in login audits
+
+### Application Configuration
+
+- **AppConfigurationSettings**: Application metadata
+  - `ApplicationUrl`: Base URL of the application
+  - `Version`: Current version number
+  - `App`: Application type identifier
+  - `AppName`: Display name
+  - `Company`: Company name
+  - `Copyright`: Copyright notice
+
 ## Important Constraints
 
-- Target framework: `net9.0` (NOTE: CI workflow shows .NET 10 in `dotnet.yml:26` but projects may be on .NET 9 - verify project files)
+- Target framework: `net10.0` (all projects use .NET 10)
 - Database access: Always use `IApplicationDbContextFactory` pattern, never inject `ApplicationDbContext` directly
 - Caching: Use `<Entity>CacheKey.Tags` consistently for invalidation
 - Permissions: Auto-discovered from `Permissions` nested classes, no manual registration needed
